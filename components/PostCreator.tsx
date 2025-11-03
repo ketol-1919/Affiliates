@@ -1,9 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { PostData, User } from '../types';
 import Preview from './Preview';
-import { fileToBase64, generateCaption } from '../services/geminiService';
 import { UploadIcon } from './icons/UploadIcon';
-import { SparklesIcon } from './icons/SparklesIcon';
 import { LinkIcon } from './icons/LinkIcon';
 
 interface PostCreatorProps {
@@ -20,7 +18,6 @@ const PostCreator: React.FC<PostCreatorProps> = ({ onPostCreated, currentUser })
     productLink: '',
   });
   const [error, setError] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,21 +55,6 @@ const PostCreator: React.FC<PostCreatorProps> = ({ onPostCreated, currentUser })
     }
   }
 
-  const handleGenerateCaption = async () => {
-    if (!post.file) return;
-    setIsGenerating(true);
-    try {
-      const base64Data = await fileToBase64(post.file);
-      const generated = await generateCaption(base64Data, post.file.type);
-      setPost(p => ({ ...p, caption: generated }));
-    } catch (err) {
-      console.error("Error generating caption:", err);
-      setError("キャプションの生成に失敗しました。");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   const handleCaptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPost({ ...post, caption: e.target.value });
   };
@@ -108,29 +90,15 @@ const PostCreator: React.FC<PostCreatorProps> = ({ onPostCreated, currentUser })
             value={post.caption}
             onChange={handleCaptionChange}
           />
-          <div className="flex flex-col sm:flex-row gap-2">
-            <button
-              onClick={handleGenerateCaption}
-              disabled={isGenerating || !post.file}
-              className="flex-1 w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
-            >
-              {isGenerating ? (
-                <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
-              ) : (
-                <SparklesIcon className="w-5 h-5" />
-              )}
-              <span>{isGenerating ? '生成中...' : 'AIでキャプション生成'}</span>
-            </button>
-            <button
-              onClick={handlePost}
-              className="flex-1 w-full px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-lg hover:opacity-90 transition-opacity"
-            >
-              投稿を作成
-            </button>
-          </div>
+          <button
+            onClick={handlePost}
+            className="w-full px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-lg hover:opacity-90 transition-opacity"
+          >
+            投稿を作成
+          </button>
           <button
             onClick={resetPost}
-            className="w-full text-center text-sm text-gray-400 hover:text-white transition-colors mt-2"
+            className="w-full text-center text-sm text-gray-400 hover:text-white transition-colors"
           >
             別のファイルをアップロード
           </button>
